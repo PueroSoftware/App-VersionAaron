@@ -15,44 +15,49 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.EmprendeIstg"
         tools:targetApi="31">
+
         <activity
             android:name=".ui.activitys.Invitado"
             android:exported="false" />
+
+        <!-- MainActivity: receptor de deep links (desactivado temporalmente) -->
         <activity
             android:name=".MainActivity"
-            android:exported="false" />
+            android:exported="false">
+            <!--
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="app" android:host="profile" />
+            </intent-filter>
+            -->
+        </activity>
+
         <activity
             android:name=".InicioActivity"
-            android:exported="false"
+            android:exported="true"
             android:label="@string/title_activity_inicio"
-            android:theme="@style/Theme.EmprendeIstg.NoActionBar" />
+            android:theme="@style/Theme.EmprendeIstg.NoActionBar" >
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <!-- esquema personalizado: app://profile/{userId} -->
+                <data android:scheme="app" android:host="profile" />
+            </intent-filter>
+        </activity>
+        <!-- PantallaInicialActivity: LAUNCHER -->
         <activity
             android:name=".ui.activitys.PantallaInicialActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity
-            android:name=".ui.fragments.PerfilFragment"
-            android:exported="false"></activity>
-        <activity
-            android:name=".ui.fragments.MisNegociosFragment"
-            android:exported="false"></activity>
-        <activity
-            android:name=".ui.fragments.AgregarNegocioFragment"
-            android:exported="false"></activity>
-        <activity
-            android:name=".ui.fragments.OpcionesAdministradorFragment"
-            android:exported="false"></activity>
-        <activity
-            android:name=".ui.fragments.GestionFiltradoBusquedaFragment"
-            android:exported="false"></activity>
-        <activity
-            android:name=".ui.fragments.SolicitudesNegociosFragment"
-            android:exported="false"></activity>
+
+        <!-- NOTA: NO declarar Fragments como <activity> en el manifest. -->
     </application>
 
 </manifest>

@@ -24,20 +24,18 @@ import androidx.navigation.NavDestination;
 import androidx.navigation.Navigation;
 import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
-
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.material.navigation.NavigationView;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-
 import istg.edu.ec.appEmprendeISTGDev.data.model.UserModel;
 import istg.edu.ec.appEmprendeISTGDev.databinding.ActivityInicioBinding;
 import istg.edu.ec.appEmprendeISTGDev.viewModel.PermisosViewModel;
 import istg.edu.ec.appEmprendeISTGDev.viewModel.UserViewModel;
-
 import static istg.edu.ec.appEmprendeISTGDev.utils.StatusBarUtilsKt.setStatusBarColor;
+import istg.edu.ec.appEmprendeISTGDev.utils.DeepLinkManager;
 
 public class InicioActivity extends AppCompatActivity {
     private AppBarConfiguration mAppBarConfiguration;
@@ -101,19 +99,13 @@ public class InicioActivity extends AppCompatActivity {
 
         // --- Toolbar & Drawer ---
         setSupportActionBar(binding.appBarInicio.toolbar);
-//        binding.appBarInicio.fab.setOnClickListener(v ->
-//                Snackbar.make(v, "Replace with your own action", Snackbar.LENGTH_LONG).show()
-//        );
 
         DrawerLayout drawer = binding.drawerLayout;
         mAppBarConfiguration = new AppBarConfiguration.Builder(
                 R.id.perfilFragment,
                 R.id.nav_home,
-//                R.id.perfilFragment,
                 R.id.misNegociosFragment,
-//                R.id.agregarNegocioFragment,
                 R.id.filtroBusquedaFragment,
-//                R.id.revisarPublicacionesFragment,
                 R.id.opcionesAdministradorFragment
         )
                 .setOpenableLayout(drawer)
@@ -121,11 +113,7 @@ public class InicioActivity extends AppCompatActivity {
 
         navController = Navigation.findNavController(this, R.id.nav_host_fragment_content_inicio);
         NavigationUI.setupActionBarWithNavController(this, navController, mAppBarConfiguration);
-//      NavigationUI.setupWithNavController(navigationView, navController);
 
-
-        // ——————  NUEVA PARTE ——————
-        // Cada vez que se abra el Drawer, marca el ítem que corresponda al fragmento actual
         drawer.addDrawerListener(new DrawerLayout.SimpleDrawerListener() {
             @Override
             public void onDrawerOpened(View drawerView) {
@@ -134,7 +122,6 @@ public class InicioActivity extends AppCompatActivity {
                 navigationView.setCheckedItem(idToCheck);
             }
         });
-        // ——————————————————————
 
         // --- Google Sign-In ---
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
@@ -157,29 +144,49 @@ public class InicioActivity extends AppCompatActivity {
             }
         });
 
-        // -------------------------
-        // Navigation sin "saltito"
-        // -------------------------
+        // --- Navigation sin "saltito" ---
         navigationView.setNavigationItemSelectedListener(menuItem -> {
             boolean handled = NavigationUI.onNavDestinationSelected(menuItem, navController);
 
-            // Caso especial: forzar recarga de filtroBusquedaFragment
             if (menuItem.getItemId() == R.id.filtroBusquedaFragment) {
                 navController.navigate(R.id.filtroBusquedaFragment);
                 handled = true;
             }
 
-            // 🚀 NUEVO: caso especial Compartir Aplicación
             if (menuItem.getItemId() == R.id.nav_share) {
                 compartirApp();
                 handled = true;
             }
 
             if (handled) {
-                drawer.closeDrawers(); // Cierra el Drawer después de navegar o compartir
+                drawer.closeDrawers();
             }
             return handled;
         });
+
+        // --- Manejo de Deep Link ---
+        // Procesa el intent que inició la actividad
+        DeepLinkManager.INSTANCE.handleIncomingIntent(
+                this,
+                getIntent(),
+                R.id.nav_host_fragment_content_inicio, // ID del NavHost
+                null, // ID del destino (null para que NavController use el deep link del nav graph)
+                "userId"
+        );
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent); // Actualiza el intent de la actividad
+        // Procesa el nuevo intent si la actividad ya estaba abierta
+        DeepLinkManager.INSTANCE.handleIncomingIntent(
+                this,
+                intent,
+                R.id.nav_host_fragment_content_inicio,
+                null,
+                "userId"
+        );
     }
 
     private void guardarUsuario(FirebaseUser fireuser) {
@@ -197,7 +204,6 @@ public class InicioActivity extends AppCompatActivity {
         });
     }
 
-    // 🚀 NUEVO: método para compartir app
     private void compartirApp() {
         Intent shareIntent = new Intent(Intent.ACTION_SEND);
         shareIntent.setType("text/plain");
@@ -212,19 +218,13 @@ public class InicioActivity extends AppCompatActivity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.inicio, menu);
-
-        // Forzar color del texto del item del menú
         MenuItem item = menu.findItem(R.id.action_settings);
         SpannableString spanString = new SpannableString(item.getTitle());
-
-        // Detectar modo noche
         int nightModeFlags = getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK;
         boolean isNight = nightModeFlags == Configuration.UI_MODE_NIGHT_YES;
-
         int color = isNight ? Color.WHITE : Color.BLACK;
         spanString.setSpan(new ForegroundColorSpan(color), 0, spanString.length(), 0);
         item.setTitle(spanString);
-
         return true;
     }
 

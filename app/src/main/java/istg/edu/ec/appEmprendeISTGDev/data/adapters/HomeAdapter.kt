@@ -3,17 +3,17 @@ package istg.edu.ec.appEmprendeISTGDev.ui.adapters
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import istg.edu.ec.appEmprendeISTGDev.R
-import istg.edu.ec.appEmprendeISTGDev.data.adapters.DescripcionProductosServiciosPreciosAdapter
-import istg.edu.ec.appEmprendeISTGDev.data.adapters.LinksExternosAdapter
 import istg.edu.ec.appEmprendeISTGDev.data.adapters.LinksProductosServiciosAdapter
 import istg.edu.ec.appEmprendeISTGDev.data.model.AgregarNegocioModel
 import istg.edu.ec.appEmprendeISTGDev.ui.fragments.ProductoResumenDialogFragment
+import istg.edu.ec.appEmprendeISTGDev.utils.DeepLinkManager
 
 // Adaptador para mostrar una lista de negocios en el RecyclerView del Home
 class HomeAdapter(private var items: List<AgregarNegocioModel>) : RecyclerView.Adapter<HomeAdapter.ViewHolder>() {
@@ -25,9 +25,10 @@ class HomeAdapter(private var items: List<AgregarNegocioModel>) : RecyclerView.A
         val propietario: TextView = view.findViewById(R.id.tvVisitarPerfil)
         val descripcion: TextView = view.findViewById(R.id.tvDescripcion)
         val ubicacion: TextView = view.findViewById(R.id.tvUbicacion)
-//        val rvProductosServicios: RecyclerView = view.findViewById(R.id.rvProductosServiciosPrecios)
         val rvLinksProductosServicios: RecyclerView = view.findViewById(R.id.rvLinksProductosServicios)
         val lyProductos: LinearLayout? = view.findViewById(R.id.lyProductos)
+        // Botón compartir
+        val btnCompartir: ImageButton? = view.findViewById(R.id.btnCompartir)
     }
 
     // Infla el diseño del ítem y crea un nuevo ViewHolder
@@ -42,18 +43,10 @@ class HomeAdapter(private var items: List<AgregarNegocioModel>) : RecyclerView.A
 
         with(holder) {
             // Asignar valores a los elementos de la UI
-            nombreNegocio.text = negocio.nombreLocal ?: "Sin nombre"
-            propietario.text = negocio.nombreUsuario ?: "Sin propietario"
-            descripcion.text = negocio.descripcion ?: "Sin descripción"
-            ubicacion.text = negocio.direccion ?: "Sin dirección"
-
-            // Configurar RecyclerView de productos (si quisieras mantenerlo reducido)
-//            rvProductosServicios.apply {
-//                layoutManager = LinearLayoutManager(context)
-//                adapter = DescripcionProductosServiciosPreciosAdapter(
-//                    negocio.descripcionProductosServicios ?: emptyList()
-//                )
-//            }
+            nombreNegocio.text = negocio.nombreLocal.ifBlank { "Sin nombre" }
+            propietario.text = negocio.nombreUsuario.ifBlank { "Sin propietario" }
+            descripcion.text = negocio.descripcion.ifBlank { "Sin descripción" }
+            ubicacion.text = negocio.direccion.ifBlank { "Sin dirección" }
 
             // Configurar RecyclerView de links
             rvLinksProductosServicios.apply {
@@ -63,21 +56,33 @@ class HomeAdapter(private var items: List<AgregarNegocioModel>) : RecyclerView.A
                 )
             }
 
-            // 👉 Listener para abrir el diálogo de productos y numeroWhatsApp
+            // Listener para abrir el diálogo de productos y numeroWhatsApp
             lyProductos?.setOnClickListener {
                 val dialog = ProductoResumenDialogFragment(
                     productos = negocio.descripcionProductosServicios ?: emptyList(),
-                    numeroWhatsApp = negocio.telefonoWhatsApp ?: "" // Aquí pasas el número del negocio
+                    numeroWhatsApp = negocio.telefonoWhatsApp ?: ""
                 )
-
-//                val dialog = ProductoResumenDialogFragment.newInstance(
-//                    negocio.descripcionProductosServicios ?: emptyList()
-//                )
 
                 val activity = it.context as? AppCompatActivity
                 activity?.let { act ->
                     dialog.show(act.supportFragmentManager, "ProductosDialog")
                 }
+            }
+
+            // Listener de compartir: delega toda la lógica a DeepLinkManager
+            btnCompartir?.setOnClickListener {
+                // Preferimos uid (usuario) si está disponible, si no usamos id
+                val userId = negocio.uid?.takeIf { it.isNotBlank() } ?: negocio.id?.takeIf { it.isNotBlank() } ?: ""
+                if (userId.isBlank()) {
+                    // No hay id: opcionalmente se podría mostrar un Toast, pero aquí retornamos
+                    return@setOnClickListener
+                }
+
+                // Nombre para mostrar en el mensaje
+                val displayName = negocio.nombreUsuario.ifBlank { negocio.nombreLocal.ifBlank { "usuario" } }
+
+                // Delegamos la creación y lanzamiento del Intent al manager centralizado
+                DeepLinkManager.shareProfile(itemView.context, displayName, userId)
             }
         }
     }
@@ -91,10 +96,3 @@ class HomeAdapter(private var items: List<AgregarNegocioModel>) : RecyclerView.A
         notifyDataSetChanged()
     }
 }
-
-//rvLinksProductosServicios.apply {
-//    layoutManager = LinearLayoutManager(context)
-//    adapter = LinksExternosAdapter(
-//        negocio.enlacesExternos ?: emptyList()
-//    )
-//}

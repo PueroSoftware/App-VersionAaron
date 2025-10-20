@@ -15,7 +15,14 @@
         android:id="@+id/perfilFragment"
         android:name="istg.edu.ec.appEmprendeISTGDev.ui.fragments.PerfilFragment"
         android:label="Perfil"
-        tools:layout="@layout/fragment_perfil" />
+        tools:layout="@layout/fragment_perfil" >
+        <argument
+            android:name="userId"
+            app:argType="string"
+            app:nullable="true" />
+        <deepLink
+            app:uri="app://profile/{userId}" />
+    </fragment>
 
     <fragment
         android:id="@+id/misNegociosFragment"
