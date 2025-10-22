@@ -54,9 +54,8 @@ public class InicioActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        setStatusBarColor(this, R.color.azul_navbar, true); // Fondo azul, íconos negros
+        setStatusBarColor(this, R.color.azul_navbar, true);
 
-        // --- Inyección de vistas y ViewModels ---
         sharedPreferences = getSharedPreferences("MisPreferencias", Context.MODE_PRIVATE);
         editor = sharedPreferences.edit();
         userViewModel = new ViewModelProvider(this).get(UserViewModel.class);
@@ -65,18 +64,15 @@ public class InicioActivity extends AppCompatActivity {
         binding = ActivityInicioBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
-        // --- Firebase Auth ---
         mAuth = FirebaseAuth.getInstance();
         FirebaseUser currentUser = mAuth.getCurrentUser();
 
-        // --- NavigationView ---
         navigationView = binding.navView;
 
         if (currentUser != null) {
             String uid = currentUser.getUid();
             editor.putString("uid", uid).apply();
 
-            // Verificar si el usuario es administrador
             permisosViewModel.checkAdminStatus(uid);
             permisosViewModel.getEsAdmin().observe(this, esAdmin -> {
                 Menu menu = navigationView.getMenu();
@@ -97,7 +93,6 @@ public class InicioActivity extends AppCompatActivity {
             return;
         }
 
-        // --- Toolbar & Drawer ---
         setSupportActionBar(binding.appBarInicio.toolbar);
 
         DrawerLayout drawer = binding.drawerLayout;
@@ -123,19 +118,16 @@ public class InicioActivity extends AppCompatActivity {
             }
         });
 
-        // --- Google Sign-In ---
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestIdToken(getString(R.string.default_web_client_id))
                 .requestEmail()
                 .build();
         mGoogleSignInClient = GoogleSignIn.getClient(this, gso);
 
-        // --- ProgressDialog ---
         progressDialog = new ProgressDialog(this);
         progressDialog.setMessage("Cerrando sesión...");
         progressDialog.setCancelable(false);
 
-        // --- Observador de Usuario Firestore ---
         userViewModel.getUsuario().observe(this, usuario -> {
             if (usuario == null) {
                 guardarUsuario(currentUser);
@@ -144,7 +136,6 @@ public class InicioActivity extends AppCompatActivity {
             }
         });
 
-        // --- Navigation sin "saltito" ---
         navigationView.setNavigationItemSelectedListener(menuItem -> {
             boolean handled = NavigationUI.onNavDestinationSelected(menuItem, navController);
 
@@ -165,12 +156,11 @@ public class InicioActivity extends AppCompatActivity {
         });
 
         // --- Manejo de Deep Link ---
-        // Procesa el intent que inició la actividad
         DeepLinkManager.INSTANCE.handleIncomingIntent(
                 this,
                 getIntent(),
-                R.id.nav_host_fragment_content_inicio, // ID del NavHost
-                null, // ID del destino (null para que NavController use el deep link del nav graph)
+                R.id.nav_host_fragment_content_inicio,
+                null,
                 "userId"
         );
     }
@@ -178,8 +168,7 @@ public class InicioActivity extends AppCompatActivity {
     @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
-        setIntent(intent); // Actualiza el intent de la actividad
-        // Procesa el nuevo intent si la actividad ya estaba abierta
+        setIntent(intent);
         DeepLinkManager.INSTANCE.handleIncomingIntent(
                 this,
                 intent,
