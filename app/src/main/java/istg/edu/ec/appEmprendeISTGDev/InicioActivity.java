@@ -155,27 +155,31 @@ public class InicioActivity extends AppCompatActivity {
             return handled;
         });
 
-        // --- Manejo de Deep Link ---
-        DeepLinkManager.INSTANCE.handleIncomingIntent(
-                this,
-                getIntent(),
-                R.id.nav_host_fragment_content_inicio,
-                null,
-                "userId"
-        );
+        // --- Manejo de Deep Link (Versión Final y Corregida) ---
+        binding.getRoot().post(() -> {
+            DeepLinkManager.INSTANCE.handleIncomingIntent(
+                    this,
+                    getIntent(),
+                    R.id.nav_host_fragment_content_inicio, // ID del NavHost
+                    R.id.revisarPublicacionesFragment      // ÚNICO destino que nos interesa para el deep link
+            );
+        });
     }
 
     @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
         setIntent(intent);
-        DeepLinkManager.INSTANCE.handleIncomingIntent(
-                this,
-                intent,
-                R.id.nav_host_fragment_content_inicio,
-                null,
-                "userId"
-        );
+
+        // --- Manejo de Deep Link (Versión Final y Corregida) ---
+        binding.getRoot().post(() -> {
+            DeepLinkManager.INSTANCE.handleIncomingIntent(
+                    this,
+                    getIntent(), // Usamos getIntent() para obtener el intent más reciente
+                    R.id.nav_host_fragment_content_inicio,
+                    R.id.revisarPublicacionesFragment
+            );
+        });
     }
 
     private void guardarUsuario(FirebaseUser fireuser) {
